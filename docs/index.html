@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>多语售后 Agent · 在线版</title>
+<style>
+  :root{--bg:#f3f5f9;--card:#fff;--ink:#1f2937;--ink2:#6b7280;--line:#e5e7eb;
+    --blue:#1d4ed8;--blue-soft:#eff4ff;--orange:#ea580c;--orange-soft:#fff4ec;
+    --green:#16a34a;--green-soft:#ecfdf3;--red:#dc2626;--red-soft:#fef2f2;
+    --radius:14px;--shadow:0 6px 24px rgba(17,24,39,.08)}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:"PingFang SC","Microsoft YaHei","Segoe UI",system-ui,sans-serif;background:var(--bg);color:var(--ink)}
+  header{background:var(--card);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:50}
+  .hwrap{max-width:1180px;margin:0 auto;padding:14px 20px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+  .logo{width:40px;height:40px;border-radius:12px;background:linear-gradient(135deg,var(--blue),#3b82f6);display:flex;align-items:center;justify-content:center;color:#fff;font-size:19px}
+  .brand h1{font-size:16px}.brand p{font-size:12px;color:var(--ink2);margin-top:2px}
+  .tabs{margin-left:auto;display:flex;gap:6px;background:#eef1f6;border-radius:12px;padding:4px}
+  .tab{border:none;background:transparent;padding:8px 14px;border-radius:9px;font-size:13px;color:var(--ink2);cursor:pointer;font-weight:600}
+  .tab.on{background:var(--card);color:var(--blue);box-shadow:0 2px 8px rgba(17,24,39,.1)}
+  .gear{border:1px solid var(--line);background:#fff;border-radius:9px;padding:7px 12px;font-size:13px;cursor:pointer}
+  main{max-width:1180px;margin:0 auto;padding:22px 20px 60px}
+  section.view{display:none}section.view.on{display:block}
+  .chat-grid{display:grid;grid-template-columns:1fr 400px;gap:22px;align-items:start}
+  @media(max-width:920px){.chat-grid{grid-template-columns:1fr}}
+  .panel{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow)}
+  .pad{padding:18px}.panel h3{font-size:14px;margin-bottom:12px}
+  .badge{display:inline-block;font-size:11px;padding:2px 8px;border-radius:999px;font-weight:600}
+  .b-blue{background:var(--blue-soft);color:var(--blue)}.b-orange{background:var(--orange-soft);color:var(--orange)}
+  .b-green{background:var(--green-soft);color:var(--green)}.b-red{background:var(--red-soft);color:var(--red)}
+  .b-gray{background:#f3f4f6;color:var(--ink2)}
+  .stack{display:flex;flex-direction:column;gap:16px}
+  .pills{display:flex;flex-wrap:wrap;gap:6px}
+  .pill{border:1px solid var(--line);background:#fff;border-radius:999px;padding:6px 12px;font-size:12.5px;cursor:pointer;color:var(--ink2);font-weight:600}
+  .pill.on{background:var(--blue);border-color:var(--blue);color:#fff}
+  .chips{display:flex;flex-direction:column;gap:8px}
+  .chipq{text-align:left;border:1px solid var(--line);background:#fbfcfe;border-radius:10px;padding:9px 12px;font-size:12.5px;cursor:pointer;line-height:1.5}
+  .chipq:hover{border-color:var(--blue);background:var(--blue-soft)}
+  .chipq .lg{font-size:10.5px;color:var(--blue);font-weight:700;margin-right:6px}
+  .note{font-size:11.5px;color:var(--ink2);margin-top:10px;line-height:1.6}
+  .qrbox{display:flex;gap:14px;align-items:center}
+  .qr{width:96px;height:96px;flex:none;border:6px solid #fff;outline:1px solid var(--line);border-radius:8px}
+  .qrbox p{font-size:12.5px;color:var(--ink2);line-height:1.7}
+  .statusbar{display:flex;align-items:center;gap:8px;font-size:12.5px;padding:10px 14px;border-radius:10px;line-height:1.6}
+  .statusbar.on{background:var(--green-soft);color:var(--green)}
+  .statusbar.off{background:var(--orange-soft);color:var(--orange)}
+  .phone{background:#0f172a;border-radius:34px;padding:10px;box-shadow:0 18px 50px rgba(15,23,42,.28)}
+  .screen{background:#f8fafc;border-radius:26px;overflow:hidden;display:flex;flex-direction:column;height:640px}
+  .phead{background:linear-gradient(135deg,#1e3a8a,#1d4ed8);color:#fff;padding:14px 16px;display:flex;align-items:center;gap:10px}
+  .avatar{width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,.18);display:flex;align-items:center;justify-content:center;font-size:18px}
+  .phead .t b{font-size:14px;display:block}.phead .t span{font-size:11px;opacity:.85}
+  .dot{width:8px;height:8px;border-radius:50%;background:#4ade80;display:inline-block;margin-right:4px}
+  .msgs{flex:1;overflow-y:auto;padding:14px 12px;display:flex;flex-direction:column;gap:10px}
+  .m{max-width:88%;padding:10px 12px;border-radius:14px;font-size:13px;line-height:1.7;word-break:break-word}
+  .m.user{align-self:flex-end;background:var(--blue);color:#fff;border-bottom-right-radius:4px;white-space:pre-wrap}
+  .m.bot{align-self:flex-start;background:#fff;border:1px solid var(--line);border-bottom-left-radius:4px;box-shadow:0 2px 6px rgba(17,24,39,.05)}
+  .m.bot.ticket{border-left:4px solid var(--orange);background:var(--orange-soft)}
+  .m .meta{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+  .typing{align-self:flex-start;background:#fff;border:1px solid var(--line);border-radius:14px;padding:10px 14px;display:flex;gap:4px}
+  .typing i{width:6px;height:6px;border-radius:50%;background:#9ca3af;animation:tp 1s infinite}
+  .typing i:nth-child(2){animation-delay:.15s}.typing i:nth-child(3){animation-delay:.3s}
+  @keyframes tp{30%{transform:translateY(-4px);opacity:1}60%{opacity:.4}}
+  .pinput{display:flex;gap:8px;padding:10px;border-top:1px solid var(--line);background:#fff}
+  .pinput input{flex:1;border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-size:13px;outline:none}
+  .pinput input:focus{border-color:var(--blue)}
+  .pinput button{background:var(--blue);color:#fff;border:none;border-radius:10px;padding:0 16px;font-size:14px;cursor:pointer;font-weight:600}
+  .cards{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:16px}
+  @media(max-width:920px){.cards{grid-template-columns:repeat(2,1fr)}}
+  .kpi{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:16px;box-shadow:var(--shadow)}
+  .kpi .v{font-size:24px;font-weight:800}.kpi .v small{font-size:13px;font-weight:600;color:var(--ink2)}
+  .kpi .l{font-size:12px;color:var(--ink2);margin-top:4px}
+  .dash-grid{display:grid;grid-template-columns:1.3fr 1fr;gap:16px;margin-bottom:16px}
+  @media(max-width:920px){.dash-grid{grid-template-columns:1fr}}
+  table.log{width:100%;border-collapse:collapse;font-size:12.5px}
+  table.log th{text-align:left;color:var(--ink2);font-weight:600;padding:8px 10px;border-bottom:1px solid var(--line);font-size:11.5px}
+  table.log td{padding:9px 10px;border-bottom:1px solid #f1f3f7;vertical-align:top}
+  .empty{padding:34px 16px;text-align:center;color:var(--ink2);font-size:13px;line-height:2}
+  .legend{display:flex;flex-direction:column;gap:7px;font-size:12.5px}
+  .legend .li{display:flex;align-items:center;gap:8px}
+  .legend .sw{width:10px;height:10px;border-radius:3px}
+  .legend .pc{margin-left:auto;font-weight:700}
+  .kb-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+  @media(max-width:920px){.kb-grid{grid-template-columns:1fr}}
+  .kbc{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:16px;box-shadow:var(--shadow)}
+  .kbc .code{font-size:15px;font-weight:800;color:var(--blue)}
+  .kbc .tt{font-size:13px;font-weight:600;margin:4px 0 8px}
+  .banner{background:var(--blue-soft);border:1px solid #c7dbff;border-radius:var(--radius);padding:14px 18px;font-size:13px;color:#1e3a8a;line-height:1.7;margin-bottom:18px}
+  code{background:#eef1f6;border-radius:4px;padding:1px 5px;font-size:12px}
+  /* settings modal */
+  .mask{position:fixed;inset:0;background:rgba(15,23,42,.45);display:none;align-items:center;justify-content:center;z-index:100}
+  .mask.on{display:flex}
+  .modal{background:#fff;border-radius:16px;width:min(480px,92vw);padding:22px;box-shadow:0 24px 60px rgba(15,23,42,.3)}
+  .modal h3{font-size:15px;margin-bottom:14px}
+  .fld{margin-bottom:12px}
+  .fld label{display:block;font-size:12px;color:var(--ink2);margin-bottom:5px;font-weight:600}
+  .fld input,.fld select{width:100%;border:1px solid var(--line);border-radius:9px;padding:9px 11px;font-size:13px;outline:none}
+  .fld input:focus{border-color:var(--blue)}
+  .mrow{display:flex;gap:10px;margin-top:16px}
+  .mrow button{flex:1;border:none;border-radius:9px;padding:10px;font-size:13.5px;font-weight:600;cursor:pointer}
+  .mrow .save{background:var(--blue);color:#fff}
+  .mrow .clear{background:#f3f4f6;color:var(--ink2)}
+  .preset{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
+  .preset button{border:1px solid var(--line);background:#fff;border-radius:999px;padding:4px 10px;font-size:11.5px;cursor:pointer;color:var(--ink2)}
+  .preset button:hover{border-color:var(--blue);color:var(--blue)}
+</style>
+</head>
+<body>
+<header><div class="hwrap">
+  <div class="logo">🛠️</div>
+  <div class="brand"><h1>多语售后 Agent · 在线版</h1><p>知识库检索 + LLM 实时问答 · 出海设备厂专用</p></div>
+  <nav class="tabs">
+    <button class="tab on" data-v="v-chat">📱 客户对话</button>
+    <button class="tab" data-v="v-dash">📊 数据看板</button>
+    <button class="tab" data-v="v-kb">📚 知识库</button>
+  </nav>
+  <button class="gear" id="openSettings">⚙️ API 设置</button>
+</div></header>
+
+<main>
+<section class="view on" id="v-chat">
+  <div class="chat-grid">
+    <div class="stack">
+      <div class="panel"><div class="pad">
+        <h3>🔌 运行状态</h3>
+        <div class="statusbar off" id="llmStatus">检测中…</div>
+        <p class="note">点右上角 <b>⚙️ API 设置</b> 填入 Key 即为完整 AI 模式（Key 只存在你自己浏览器的 localStorage，直连 LLM 服务商，不经过任何第三方）。不配 Key 也能体验：离线规则模式直出手册原文。</p>
+      </div></div>
+      <div class="panel"><div class="pad">
+        <h3>🌐 回答语言</h3>
+        <div class="pills" id="langPills">
+          <button class="pill on" data-l="auto">自动识别</button>
+          <button class="pill" data-l="zh">中文</button>
+          <button class="pill" data-l="en">English</button>
+          <button class="pill" data-l="es">Español</button>
+          <button class="pill" data-l="ru">Русский</button>
+          <button class="pill" data-l="th">ไทย</button>
+        </div>
+        <p class="note">AI 模式下支持任意语言（西/俄/泰/阿/越…），知识库只需中英原文，翻译由模型实时完成。</p>
+      </div></div>
+      <div class="panel"><div class="pad">
+        <h3>⚡ 快速体验（模拟海外客户）</h3>
+        <div class="chips">
+          <button class="chipq" data-q="Mi máquina muestra E201, ¿qué hago?"><span class="lg">ES</span>Mi máquina muestra E201, ¿qué hago?</button>
+          <button class="chipq" data-q="E102: the laser has no output"><span class="lg">EN</span>E102: the laser has no output</button>
+          <button class="chipq" data-q="Ошибка E101, лазер перегревается"><span class="lg">RU</span>Ошибка E101, лазер перегревается</button>
+          <button class="chipq" data-q="เครื่องตัดไม่ขาด ต้องทำอย่างไร"><span class="lg">TH</span>เครื่องตัดไม่ขาด ต้องทำอย่างไร</button>
+          <button class="chipq" data-q="日常保养多久做一次？"><span class="lg">ZH</span>日常保养多久做一次？</button>
+          <button class="chipq" data-q="主轴电机有异响怎么办？"><span class="lg">ZH</span>主轴电机有异响怎么办？（知识库没有 → 转人工）</button>
+        </div>
+      </div></div>
+      <div class="panel"><div class="pad">
+        <h3>📮 真实交付怎么用</h3>
+        <div class="qrbox">
+          <svg class="qr" viewBox="0 0 96 96" id="qrSvg"></svg>
+          <p>把这个网址生成二维码贴在设备上，海外客户扫码即聊。正式交付用仓库里的 <code>server.js</code> 服务端版（Key 在服务端、数据集中统计），本在线版用于演示体验。</p>
+        </div>
+      </div></div>
+    </div>
+
+    <div class="phone"><div class="screen">
+      <div class="phead">
+        <div class="avatar">🤖</div>
+        <div class="t"><b>LTX-3015 · 售后助手</b><span><i class="dot"></i><span id="modeLine">connecting…</span></span></div>
+      </div>
+      <div class="msgs" id="msgs"></div>
+      <div class="pinput">
+        <input id="inp" placeholder="描述故障或输入报警代码，如 E201…" autocomplete="off">
+        <button id="send">发送</button>
+      </div>
+    </div></div>
+  </div>
+</section>
+
+<section class="view" id="v-dash">
+  <div class="banner" style="margin-bottom:16px">📊 本页统计的是<b>你在这台设备、这个浏览器里</b>的真实对话数据（localStorage）。正式部署服务端版后，统计自动汇总所有客户设备的数据。</div>
+  <div class="cards" id="kpiCards"></div>
+  <div class="dash-grid">
+    <div class="panel"><div class="pad"><h3>📅 近 14 天提问量</h3><div id="barChart"></div></div></div>
+    <div class="panel"><div class="pad"><h3>🌍 提问语言分布</h3>
+      <div style="display:flex;gap:18px;align-items:center;flex-wrap:wrap">
+        <div id="donut"></div><div class="legend" id="donutLegend" style="flex:1;min-width:140px"></div>
+      </div></div></div>
+  </div>
+  <div class="dash-grid">
+    <div class="panel"><div class="pad"><h3>🔥 高频故障代码</h3><div id="topBars"></div></div></div>
+    <div class="panel"><div class="pad"><h3>🕒 最近会话</h3>
+      <table class="log"><thead><tr><th>时间</th><th>语言</th><th>问题</th><th>结果</th></tr></thead><tbody id="logBody"></tbody></table>
+      <div class="empty" id="logEmpty" style="display:none">还没有会话记录<br>去「客户对话」发几条消息，这里会自动生成真实数据</div>
+    </div></div>
+  </div>
+</section>
+
+<section class="view" id="v-kb">
+  <div class="banner"><b>📚 知识库：</b>当前内置 <span id="kbCount"></span> 条激光切割机手册条目（中英双语）。仓库 <code>knowledge/</code> 目录里一个 md 文件就是一条知识，换成任何设备的手册即可。</div>
+  <div class="kb-grid" id="kbGrid"></div>
+</section>
+</main>
+
+<!-- 设置弹窗 -->
+<div class="mask" id="mask"><div class="modal">
+  <h3>⚙️ LLM API 设置（OpenAI 兼容接口）</h3>
+  <div class="fld"><label>API Key（只存本机 localStorage）</label>
+    <input id="cfgKey" type="password" placeholder="sk-..."></div>
+  <div class="fld"><label>Base URL</label>
+    <input id="cfgBase" placeholder="https://api.deepseek.com/v1">
+    <div class="preset">
+      <button data-b="https://api.deepseek.com/v1" data-m="deepseek-chat">DeepSeek</button>
+      <button data-b="https://api.moonshot.cn/v1" data-m="moonshot-v1-8k">Kimi</button>
+      <button data-b="https://dashscope.aliyuncs.com/compatible-mode/v1" data-m="qwen-plus">通义千问</button>
+      <button data-b="https://openrouter.ai/api/v1" data-m="openai/gpt-4o-mini">OpenRouter</button>
+      <button data-b="https://api.openai.com/v1" data-m="gpt-4o-mini">OpenAI</button>
+    </div></div>
+  <div class="fld"><label>模型</label><input id="cfgModel" placeholder="deepseek-chat"></div>
+  <p class="note">提示：浏览器直连需要服务商支持跨域（CORS）。DeepSeek / Kimi / OpenRouter 均支持；如遇浏览器报 CORS 错误请换一家，或部署仓库里的服务端版。<b>⚠️ 不要在公用电脑上填 Key。</b></p>
+  <div class="mrow">
+    <button class="clear" id="cfgClear">清除配置</button>
+    <button class="save" id="cfgSave">保存并启用</button>
+  </div>
+</div></div>
+
+<script src="kb-data.js"></script>
+<script>
+/* ================= 配置 ================= */
+const CFG = {
+  get key(){return localStorage.getItem("masa_key")||"";},
+  get base(){return localStorage.getItem("masa_base")||"https://api.deepseek.com/v1";},
+  get model(){return localStorage.getItem("masa_model")||"deepseek-chat";}
+};
+const DEVICE="LTX-3015 光纤激光切割机", MANUAL="《LTX-3015 使用维护手册 V3.2》";
+const $=s=>document.querySelector(s);
+let forced="auto"; const history=[];
+
+/* ================= 语言识别 ================= */
+const LANG_NAME={zh:"中文",en:"English",es:"Español",ru:"Русский",th:"ไทย",ar:"العربية",ja:"日本語",ko:"한국어"};
+function detectLang(text){
+  if(/[\u0E00-\u0E7F]/.test(text))return"th";
+  if(/[\u0400-\u04FF]/.test(text))return"ru";
+  if(/[\u4e00-\u9fa5]/.test(text))return"zh";
+  if(/[\u0600-\u06FF]/.test(text))return"ar";
+  if(/[\u3040-\u30ff]/.test(text))return"ja";
+  if(/[\uac00-\ud7af]/.test(text))return"ko";
+  const low=" "+text.toLowerCase()+" ";
+  const esW=[" el "," la "," los "," las "," de "," que "," con "," una "," para "," sin "," por "," mi "," su "," está"," esta "," tiene"," máquina"," maquina"," láser"," corte"," agua"," presión"," presion"," error"," falla"," lente"," quema"," laser"," emite"," nada"," hace "," favor"," gracias"," cómo"," como "," no corta"," muestra"," hago","¿"];
+  const enW=[" the "," is "," machine"," laser"," cut"," water"," error"," how"," what"," not "," pressure"," no "," my "," i "];
+  let es=0,en=0;
+  esW.forEach(w=>{if(low.includes(w))es++;});
+  enW.forEach(w=>{if(low.includes(w))en++;});
+  return es>en?"es":"en";
+}
+
+/* ================= 知识库检索 ================= */
+function kbScore(q,e){
+  q=q.toLowerCase();let s=0;
+  const cm=q.match(/\be\s*-?\s*(\d{3})\b/i)||q.match(/\bm\s*-?\s*(\d{2})\b/i);
+  if(cm&&e.code){
+    const norm=e.code.toLowerCase().replace(/[^a-z0-9]/g,"");
+    const qc=(cm[0][0].toLowerCase()+cm[1]).replace(/[^a-z0-9]/g,"");
+    if(norm===qc)s+=100;
+  }
+  (e.keywords||[]).forEach(k=>{if(k&&q.includes(k.toLowerCase()))s+=10+k.length;});
+  if(e.title&&q.includes(e.title.toLowerCase()))s+=15;
+  return s;
+}
+function kbSearch(query,limit=3){
+  return KB_DATA.map(e=>({e,s:kbScore(query,e)})).filter(x=>x.s>0)
+    .sort((a,b)=>b.s-a.s).slice(0,limit).map(x=>x.e);
+}
+
+/* ================= 文案 ================= */
+const T={
+  noAnswer:{zh:"这个问题超出了当前知识库（"+MANUAL+"）的范围。为避免误判，已为你转接工程师人工处理。",
+    en:"This is beyond the current knowledge base ("+MANUAL+"). To avoid misjudgment, it has been escalated to a human engineer.",
+    es:"Esto está fuera de la base de conocimientos actual. Para evitar errores, se ha derivado a un ingeniero.",
+    ru:"Это выходит за рамки текущей базы знаний. Во избежание ошибки вопрос передан инженеру.",
+    th:"คำถามนี้อยู่นอกฐานความรู้ปัจจุบัน เพื่อหลีกเลี่ยงความผิดพลาด ได้ส่งต่อให้วิศวกรแล้ว",
+    ar:"هذا السؤال خارج قاعدة المعرفة الحالية. لتجنب أي خطأ، تم تحويله إلى مهندس بشري."},
+  ticket:{zh:"🎫 已生成工单 #SZ-NUM，服务工程师将在 2 小时内通过 WhatsApp / 邮件联系你（本对话记录已随工单附上）。",
+    en:"🎫 Ticket #SZ-NUM created. A service engineer will contact you within 2 hours via WhatsApp / email (this conversation is attached).",
+    es:"🎫 Ticket #SZ-NUM creado. Un ingeniero te contactará en 2 horas por WhatsApp / correo (esta conversación va adjunta).",
+    ru:"🎫 Заявка #SZ-NUM создана. Инженер свяжется с вами в течение 2 часов через WhatsApp / e-mail (переписка приложена).",
+    th:"🎫 สร้างใบงาน #SZ-NUM แล้ว วิศวกรจะติดต่อภายใน 2 ชั่วโมงทาง WhatsApp / อีเมล (แนบบทสนทนานี้แล้ว)",
+    ar:"🎫 تم إنشاء التذكرة #SZ-NUM. سيتواصل معك مهندس خلال ساعتين عبر WhatsApp / البريد الإلكتروني."},
+  offlineNote:{zh:"⚠️ 离线规则模式（未配置 API Key），以下为手册原文摘录：",
+    en:"⚠️ Offline rule mode (no API key). Excerpt from the manual:",
+    es:"⚠️ Modo sin conexión (sin clave API). Extracto del manual:",
+    ru:"⚠️ Автономный режим (ключ API не задан). Выдержка из руководства:",
+    th:"⚠️ โหมดออฟไลน์ (ไม่มีคีย์ API) ข้อความจากคู่มือ:",
+    ar:"⚠️ الوضع دون اتصال (لا يوجد مفتاح API). مقتطف من الدليل:"},
+  llmError:{zh:"⚠️ AI 接口暂时不可用（MSG），已切换为手册原文直出：",
+    en:"⚠️ AI API unavailable (MSG); showing the manual excerpt directly:",
+    es:"⚠️ API de IA no disponible (MSG); extracto del manual:",
+    ru:"⚠️ API ИИ недоступен (MSG); фрагмент руководства:",
+    th:"⚠️ API ของ AI ไม่พร้อม (MSG) แสดงข้อความจากคู่มือ:",
+    ar:"⚠️ واجهة الذكاء الاصطناعي غير متاحة (MSG)؛ مقتطف الدليل:"}
+};
+const t=(d,l)=>d[l]||d.en;
+
+/* ================= LLM（浏览器直连） ================= */
+function buildSystem(chunks,lang){
+  const ctx=chunks.map((c,i)=>"[S"+(i+1)+"] "+(c.code||"")+" "+(c.title||"")+"（来源 "+(c.ref||MANUAL)+"）\n"+c.body).join("\n\n");
+  return ["你是「"+DEVICE+"」的多语言售后技术支持助手，服务对象是海外工厂的一线操作工。",
+  "铁律：",
+  "1. 始终用【用户提问的语言】回答（当前用户语言："+(LANG_NAME[lang]||lang)+"），禁止混用其他语言。",
+  "2. 只能依据下方手册摘录作答；摘录里没有的内容，禁止编造参数、数值或步骤。",
+  "3. 如果摘录无法回答用户问题：用用户语言简短说明超出范围，并在最后一行单独输出 [ESCALATE]。",
+  "4. 回答结构：一句结论 → 编号处理步骤 → 注意事项；步骤里引用来源标记如 [S1]。",
+  "5. 高风险故障（激光器、光路、电气）必须提醒：无法排除时停机并联系工程师，禁止自行拆修。",
+  "6. 语气专业、简洁、可执行，面向车间现场。",
+  "","手册摘录：",ctx].join("\n");
+}
+async function callLLM(messages){
+  const ctrl=new AbortController();const timer=setTimeout(()=>ctrl.abort(),30000);
+  try{
+    const r=await fetch(CFG.base.replace(/\/+$/,"")+"/chat/completions",{method:"POST",
+      headers:{"Content-Type":"application/json","Authorization":"Bearer "+CFG.key},
+      body:JSON.stringify({model:CFG.model,messages,temperature:0.2,max_tokens:900}),signal:ctrl.signal});
+    if(!r.ok){const txt=await r.text();throw new Error("HTTP "+r.status+" "+txt.slice(0,120));}
+    const d=await r.json();
+    return (d.choices&&d.choices[0]&&d.choices[0].message?d.choices[0].message.content:"").trim();
+  }finally{clearTimeout(timer);}
+}
+function offlineAnswer(chunks,lang){
+  const c=chunks[0];
+  return t(T.offlineNote,lang)+"\n\n**"+(c.code||"")+" "+(c.title||"")+"**\n\n"+c.body+"\n\n— 📖 "+(c.ref||MANUAL);
+}
+
+/* ================= 日志（localStorage） ================= */
+function appendLog(entry){
+  try{
+    const arr=JSON.parse(localStorage.getItem("masa_logs")||"[]");
+    arr.push(entry);
+    if(arr.length>500)arr.splice(0,arr.length-500);
+    localStorage.setItem("masa_logs",JSON.stringify(arr));
+  }catch(e){}
+}
+function readLogs(){try{return JSON.parse(localStorage.getItem("masa_logs")||"[]");}catch(e){return[];}}
+
+/* ================= 聊天主流程 ================= */
+async function agentChat(message){
+  const started=Date.now();
+  const lang=forced==="auto"?detectLang(message):forced;
+  const chunks=kbSearch(message);
+  const ticketNo="SZ-"+(1000+Math.floor(Math.random()*9000));
+  let reply,mode="llm",escalated=false;
+  if(!chunks.length){
+    escalated=true;mode="no-hit";
+    reply=t(T.noAnswer,lang)+"\n\n"+t(T.ticket,lang).replace("NUM",ticketNo.slice(3));
+  }else if(!CFG.key){
+    mode="offline";reply=offlineAnswer(chunks,lang);
+  }else{
+    try{
+      const sys=buildSystem(chunks,lang);
+      const msgs=[{role:"system",content:sys},...history.slice(-6),{role:"user",content:message}];
+      reply=await callLLM(msgs);
+      if(!reply){mode="offline";reply=offlineAnswer(chunks,lang);}
+      else if(reply.includes("[ESCALATE]")){
+        escalated=true;
+        reply=reply.replace("[ESCALATE]","").trim()+"\n\n"+t(T.ticket,lang).replace("NUM",ticketNo.slice(3));
+      }
+    }catch(e){
+      mode="llm-error";
+      reply=t(T.llmError,lang).replace("MSG",e.message.slice(0,80))+"\n\n"+offlineAnswer(chunks,lang);
+    }
+  }
+  const latencyMs=Date.now()-started;
+  appendLog({ts:new Date().toISOString(),hour:new Date().getHours(),lang,message:message.slice(0,300),mode,escalated,codes:chunks.map(c=>c.code).filter(Boolean),latencyMs});
+  return{reply,lang,mode,escalated,latencyMs,sources:chunks.map(c=>({code:c.code,ref:c.ref||MANUAL}))};
+}
+
+/* ================= UI ================= */
+const msgs=$("#msgs"),inp=$("#inp");
+function scrollDown(){msgs.scrollTop=msgs.scrollHeight;}
+function mdLite(t){let h=t.replace(/&/g,"&amp;").replace(/</g,"&lt;");
+  h=h.replace(/\*\*(.+?)\*\*/g,"<b>$1</b>").replace(/^##\s?(.*)$/gm,"<b>$1</b>");
+  return h.replace(/\n/g,"<br>");}
+function addUser(text){const d=document.createElement("div");d.className="m user";d.textContent=text;msgs.appendChild(d);scrollDown();}
+function addBot(html,cls,sources,latency){
+  const d=document.createElement("div");d.className="m bot"+(cls?" "+cls:"");
+  d.innerHTML=html;
+  if(sources&&sources.length){
+    const meta=document.createElement("div");meta.className="meta";
+    sources.forEach(s=>{const b=document.createElement("span");b.className="badge b-gray";b.textContent="📖 "+(s.code?s.code+" · ":"")+s.ref;meta.appendChild(b);});
+    if(latency!=null){const b=document.createElement("span");b.className="badge b-blue";b.textContent="⚡ "+(latency/1000).toFixed(1)+"s";meta.appendChild(b);}
+    d.appendChild(meta);
+  }
+  msgs.appendChild(d);scrollDown();
+}
+function showTyping(){const d=document.createElement("div");d.className="typing";d.id="typing";d.innerHTML="<i></i><i></i><i></i>";msgs.appendChild(d);scrollDown();}
+function hideTyping(){const tp=document.getElementById("typing");if(tp)tp.remove();}
+async function send(text){
+  addUser(text);history.push({role:"user",content:text});showTyping();
+  try{
+    const r=await agentChat(text);hideTyping();
+    addBot(mdLite(r.reply),r.escalated?"ticket":"",r.sources,r.latencyMs);
+    history.push({role:"assistant",content:r.reply});
+  }catch(e){hideTyping();addBot("错误："+e.message);}
+}
+$("#send").onclick=()=>{const v=inp.value.trim();if(!v)return;inp.value="";send(v);};
+inp.addEventListener("keydown",e=>{if(e.key==="Enter"){const v=inp.value.trim();if(!v)return;inp.value="";send(v);}});
+document.querySelectorAll(".chipq").forEach(c=>c.onclick=()=>send(c.dataset.q));
+document.querySelectorAll("#langPills .pill").forEach(p=>p.onclick=()=>{
+  document.querySelectorAll("#langPills .pill").forEach(x=>x.classList.remove("on"));
+  p.classList.add("on");forced=p.dataset.l;});
+addBot("👋 您好 / Hello / ¡Hola! / Здравствуйте! / สวัสดีครับ!<br><br>我是设备多语售后助手。直接描述故障现象，或输入报警代码（如 E201），我会用您的语言、依据原厂手册回答。<br>Describe the fault or type an alarm code — I'll answer in your language based on the official manual.");
+
+/* ---------- 伪二维码装饰 ---------- */
+(function(){let seed=42;const rnd=()=>{seed=(seed*9301+49297)%233280;return seed/233280;};
+  let cells="";for(let y=0;y<21;y++)for(let x=0;x<21;x++){
+    const f=(x<7&&y<7)||(x>13&&y<7)||(x<7&&y>13);
+    if(!f&&rnd()>0.52)cells+='<rect x="'+(x*4.2+3)+'" y="'+(y*4.2+3)+'" width="3.6" height="3.6" fill="#0f172a"/>';}
+  function fk(cx,cy){return '<rect x="'+cx+'" y="'+cy+'" width="29.4" height="29.4" fill="#0f172a"/><rect x="'+(cx+4.2)+'" y="'+(cy+4.2)+'" width="21" height="21" fill="#fff"/><rect x="'+(cx+8.4)+'" y="'+(cy+8.4)+'" width="12.6" height="12.6" fill="#0f172a"/>';}
+  $("#qrSvg").innerHTML='<rect width="96" height="96" fill="#fff"/>'+cells+fk(3,3)+fk(62.4,3)+fk(3,62.4);})();
+
+/* ---------- 状态条 ---------- */
+function refreshStatus(){
+  const bar=$("#llmStatus");
+  if(CFG.key){bar.className="statusbar on";bar.textContent="✅ AI 模式："+CFG.model+" @ "+CFG.base.replace("https://","")+" · 知识库 "+KB_DATA.length+" 条";
+    $("#modeLine").textContent="AI online · "+CFG.model;}
+  else{bar.className="statusbar off";bar.textContent="⚠️ 离线规则模式（点右上角 ⚙️ 填入 API Key 即切换为 AI 模式）· 知识库 "+KB_DATA.length+" 条";
+    $("#modeLine").textContent="offline rule mode";}
+}
+refreshStatus();
+
+/* ---------- 设置弹窗 ---------- */
+$("#openSettings").onclick=()=>{$("#cfgKey").value=CFG.key;$("#cfgBase").value=localStorage.getItem("masa_base")||"";$("#cfgModel").value=localStorage.getItem("masa_model")||"";$("#mask").classList.add("on");};
+$("#mask").addEventListener("click",e=>{if(e.target.id==="mask")$("#mask").classList.remove("on");});
+document.querySelectorAll(".preset button").forEach(b=>b.onclick=()=>{$("#cfgBase").value=b.dataset.b;$("#cfgModel").value=b.dataset.m;});
+$("#cfgSave").onclick=()=>{
+  const k=$("#cfgKey").value.trim(),b=$("#cfgBase").value.trim(),m=$("#cfgModel").value.trim();
+  if(k)localStorage.setItem("masa_key",k);
+  if(b)localStorage.setItem("masa_base",b);
+  if(m)localStorage.setItem("masa_model",m);
+  $("#mask").classList.remove("on");refreshStatus();
+  addBot(k?"✅ 已启用 AI 模式（"+m+"）。来，用任何语言问我一个故障问题。":"已保存。");
+};
+$("#cfgClear").onclick=()=>{["masa_key","masa_base","masa_model"].forEach(x=>localStorage.removeItem(x));$("#mask").classList.remove("on");refreshStatus();addBot("已清除 API 配置，回到离线规则模式。");};
+
+/* ---------- 看板（本机真实数据） ---------- */
+const PALETTE=["#1d4ed8","#ea580c","#7c3aed","#16a34a","#d97706","#0891b2","#dc2626","#6b7280"];
+function renderDash(){
+  const rows=readLogs();
+  const total=rows.length,solved=rows.filter(r=>!r.escalated).length,esc=rows.filter(r=>r.escalated).length;
+  const avgLat=total?Math.round(rows.reduce((a,r)=>a+(r.latencyMs||0),0)/total):0;
+  const kpis=[[total,"累计提问（条）",""],
+    [total?Math.round(solved/total*100)+"<small>%</small>":"—","AI 直接解决率",solved+" 条未打扰工程师"],
+    [avgLat?(avgLat/1000).toFixed(1)+"<small>s</small>":"—","平均响应时间",""],
+    [esc,"转人工工单",""]];
+  $("#kpiCards").innerHTML=kpis.map(k=>'<div class="kpi"><div class="v">'+k[0]+'</div><div class="l">'+k[1]+'</div>'+(k[2]?'<div class="note" style="margin-top:4px">'+k[2]+'</div>':"")+'</div>').join("");
+  // 近14天
+  const dayMap={};rows.forEach(r=>{const d=(r.ts||"").slice(0,10);if(d)dayMap[d]=(dayMap[d]||0)+1;});
+  const days=[];for(let i=13;i>=0;i--){const d=new Date(Date.now()-i*86400000).toISOString().slice(0,10);days.push({day:d.slice(5),count:dayMap[d]||0});}
+  const W=560,H=170,pad=26,max=Math.max(1,...days.map(d=>d.count));let bars="";
+  days.forEach((d,i)=>{const gap=(W-pad*2)/days.length,bw=Math.min(26,gap-6),x=pad+i*gap+(gap-bw)/2;
+    const bh=(d.count/max)*(H-44),y=H-20-bh;
+    bars+='<rect x="'+x+'" y="'+y+'" width="'+bw+'" height="'+Math.max(2,bh)+'" rx="4" fill="'+(d.count?"#1d4ed8":"#dbe4f5")+'"/>'
+      +(d.count?'<text x="'+(x+bw/2)+'" y="'+(y-5)+'" font-size="10" text-anchor="middle" fill="#6b7280">'+d.count+'</text>':"")
+      +'<text x="'+(x+bw/2)+'" y="'+(H-6)+'" font-size="9" text-anchor="middle" fill="#9ca3af">'+d.day+'</text>';});
+  $("#barChart").innerHTML='<svg viewBox="0 0 '+W+' '+H+'" style="width:100%">'+bars+'</svg>';
+  // 语言
+  const byLang={};rows.forEach(r=>byLang[r.lang]=(byLang[r.lang]||0)+1);
+  const langs=Object.entries(byLang).sort((a,b)=>b[1]-a[1]);
+  if(!langs.length){$("#donut").innerHTML='<div class="empty">暂无数据</div>';$("#donutLegend").innerHTML="";}
+  else{const R=64,C=2*Math.PI*R;let off=0,seg="";
+    langs.forEach((l,i)=>{const len=C*l[1]/total;
+      seg+='<circle cx="90" cy="90" r="'+R+'" fill="none" stroke="'+PALETTE[i%PALETTE.length]+'" stroke-width="26" stroke-dasharray="'+len+' '+(C-len)+'" stroke-dashoffset="'+(-off)+'" transform="rotate(-90 90 90)"/>';
+      off+=len;});
+    $("#donut").innerHTML='<svg viewBox="0 0 180 180" style="width:160px;flex:none">'+seg+'<text x="90" y="86" text-anchor="middle" font-size="20" font-weight="800" fill="#1f2937">'+total+'</text><text x="90" y="104" text-anchor="middle" font-size="10" fill="#6b7280">条提问</text></svg>';
+    $("#donutLegend").innerHTML=langs.map((l,i)=>'<div class="li"><span class="sw" style="background:'+PALETTE[i%PALETTE.length]+'"></span>'+(LANG_NAME[l[0]]||l[0])+'<span class="pc">'+Math.round(l[1]/total*100)+'%</span></div>').join("");}
+  // 高频故障
+  const byCode={};rows.forEach(r=>(r.codes||[]).forEach(c=>byCode[c]=(byCode[c]||0)+1));
+  const codes=Object.entries(byCode).sort((a,b)=>b[1]-a[1]).slice(0,5);
+  $("#topBars").innerHTML=codes.length?codes.map(c=>{
+    const w=Math.round(c[1]/codes[0][1]*100);
+    return '<div style="margin-bottom:12px"><div style="display:flex;justify-content:space-between;font-size:12.5px;margin-bottom:4px"><span>'+c[0]+'</span><b>'+c[1]+' 次</b></div>'
+      +'<div style="height:10px;background:#eef1f6;border-radius:99px"><div style="height:100%;width:'+w+'%;background:linear-gradient(90deg,#3b82f6,#1d4ed8);border-radius:99px"></div></div></div>';}).join(""):'<div class="empty">暂无数据</div>';
+  // 最近会话
+  const recent=rows.slice(-8).reverse();
+  $("#logEmpty").style.display=recent.length?"none":"block";
+  $("#logBody").innerHTML=recent.map(r=>{
+    const time=(r.ts||"").slice(5,16).replace("T"," ");
+    const badge=r.escalated?'<span class="badge b-orange">转人工</span>':'<span class="badge b-green">已解决</span>';
+    return '<tr><td style="white-space:nowrap;color:var(--ink2)">'+time+'</td><td>'+(LANG_NAME[r.lang]||r.lang)+'</td><td>'+(r.message||"").replace(/</g,"&lt;").slice(0,60)+'</td><td>'+badge+'</td></tr>';}).join("");
+}
+
+/* ---------- 知识库视图 ---------- */
+function renderKB(){
+  $("#kbCount").textContent=KB_DATA.length;
+  const sevB={high:'<span class="badge b-red">高风险</span>',mid:'<span class="badge b-orange">中</span>',low:'<span class="badge b-green">低</span>'};
+  $("#kbGrid").innerHTML=KB_DATA.map(e=>'<div class="kbc"><div class="code">'+(e.code||"—")+'</div><div class="tt">'+e.title+'</div>'
+    +'<div>'+(sevB[e.severity]||"")+'</div><div class="note">'+e.ref+'</div></div>').join("");
+}
+
+/* ---------- Tab ---------- */
+document.querySelectorAll(".tab").forEach(tb=>tb.onclick=()=>{
+  document.querySelectorAll(".tab").forEach(x=>x.classList.remove("on"));
+  tb.classList.add("on");
+  document.querySelectorAll("section.view").forEach(v=>v.classList.remove("on"));
+  document.getElementById(tb.dataset.v).classList.add("on");
+  if(tb.dataset.v==="v-dash")renderDash();
+  if(tb.dataset.v==="v-kb")renderKB();
+});
+</script>
+</body>
+</html>

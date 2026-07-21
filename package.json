@@ -1,0 +1,12 @@
+{
+  "name": "multilang-after-sales-agent",
+  "version": "1.0.0",
+  "description": "出海设备厂多语售后 Agent：知识库检索 + OpenAI 兼容 LLM + 真实数据统计",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
