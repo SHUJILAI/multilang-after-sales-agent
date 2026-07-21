@@ -198,7 +198,10 @@
 
 <!-- 设置弹窗 -->
 <div class="mask" id="mask"><div class="modal">
-  <h3>⚙️ LLM API 设置（OpenAI 兼容接口）</h3>
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+    <h3 style="margin:0">⚙️ LLM API 设置（OpenAI 兼容接口）</h3>
+    <button id="cfgClose" style="border:none;background:#f3f4f6;border-radius:8px;width:30px;height:30px;cursor:pointer;font-size:14px;flex:none">✕</button>
+  </div>
   <div class="fld"><label>API Key（只存本机 localStorage）</label>
     <input id="cfgKey" type="password" placeholder="sk-..."></div>
   <div class="fld"><label>Base URL</label>
@@ -214,8 +217,10 @@
   <p class="note">提示：浏览器直连需要服务商支持跨域（CORS）。DeepSeek / Kimi / OpenRouter 均支持；如遇浏览器报 CORS 错误请换一家，或部署仓库里的服务端版。<b>⚠️ 不要在公用电脑上填 Key。</b></p>
   <div class="mrow">
     <button class="clear" id="cfgClear">清除配置</button>
+    <button class="clear" id="cfgTest" style="background:var(--blue-soft);color:var(--blue)">测试连接</button>
     <button class="save" id="cfgSave">保存并启用</button>
   </div>
+  <div class="note" id="cfgMsg" style="margin-top:12px;min-height:18px;font-weight:600"></div>
 </div></div>
 
 <script src="kb-data.js"></script>
@@ -422,18 +427,55 @@ function refreshStatus(){
 refreshStatus();
 
 /* ---------- 设置弹窗 ---------- */
-$("#openSettings").onclick=()=>{$("#cfgKey").value=CFG.key;$("#cfgBase").value=localStorage.getItem("masa_base")||"";$("#cfgModel").value=localStorage.getItem("masa_model")||"";$("#mask").classList.add("on");};
-$("#mask").addEventListener("click",e=>{if(e.target.id==="mask")$("#mask").classList.remove("on");});
-document.querySelectorAll(".preset button").forEach(b=>b.onclick=()=>{$("#cfgBase").value=b.dataset.b;$("#cfgModel").value=b.dataset.m;});
-$("#cfgSave").onclick=()=>{
-  const k=$("#cfgKey").value.trim(),b=$("#cfgBase").value.trim(),m=$("#cfgModel").value.trim();
-  if(k)localStorage.setItem("masa_key",k);
-  if(b)localStorage.setItem("masa_base",b);
-  if(m)localStorage.setItem("masa_model",m);
-  $("#mask").classList.remove("on");refreshStatus();
-  addBot(k?"✅ 已启用 AI 模式（"+m+"）。来，用任何语言问我一个故障问题。":"已保存。");
+async function testConn(k,b,m){
+  const ctrl=new AbortController();const timer=setTimeout(()=>ctrl.abort(),20000);
+  try{
+    const r=await fetch(b.replace(/\/+$/,"")+"/chat/completions",{method:"POST",
+      headers:{"Content-Type":"application/json","Authorization":"Bearer "+k},
+      body:JSON.stringify({model:m,messages:[{role:"user",content:"ping"}],max_tokens:1}),signal:ctrl.signal});
+    if(!r.ok){const t=await r.text();return "❌ 连接失败：HTTP "+r.status+" "+t.slice(0,120);}
+    return "✅ 连接成功！模型 "+m+" 应答正常";
+  }catch(e){
+    if(e.name==="AbortError")return "❌ 连接超时（20 秒），请检查网络或 Base URL";
+    return "❌ 无法连接："+e.message+"（若是 CORS/Failed to fetch，说明该服务商不允许浏览器直连，换 DeepSeek / OpenRouter，或用仓库里的服务端版）";
+  }finally{clearTimeout(timer);}
+}
+$("#openSettings").onclick=()=>{
+  $("#cfgKey").value=CFG.key;
+  $("#cfgBase").value=localStorage.getItem("masa_base")||"";
+  $("#cfgModel").value=localStorage.getItem("masa_model")||"";
+  $("#cfgMsg").textContent=CFG.key?("当前已配置："+CFG.model+" @ "+CFG.base):"尚未配置 API Key";
+  $("#mask").classList.add("on");
 };
-$("#cfgClear").onclick=()=>{["masa_key","masa_base","masa_model"].forEach(x=>localStorage.removeItem(x));$("#mask").classList.remove("on");refreshStatus();addBot("已清除 API 配置，回到离线规则模式。");};
+$("#cfgClose").onclick=()=>$("#mask").classList.remove("on");
+document.querySelectorAll(".preset button").forEach(b=>b.onclick=()=>{$("#cfgBase").value=b.dataset.b;$("#cfgModel").value=b.dataset.m;});
+$("#cfgTest").onclick=async()=>{
+  const k=$("#cfgKey").value.trim(),
+        b=$("#cfgBase").value.trim()||"https://api.deepseek.com/v1",
+        m=$("#cfgModel").value.trim()||"deepseek-chat";
+  if(!k){$("#cfgMsg").textContent="⚠️ 请先填 API Key";return;}
+  $("#cfgMsg").textContent="⏳ 正在测试连接…";
+  $("#cfgMsg").textContent=await testConn(k,b,m);
+};
+$("#cfgSave").onclick=async()=>{
+  const k=$("#cfgKey").value.trim(),b=$("#cfgBase").value.trim(),m=$("#cfgModel").value.trim();
+  try{
+    if(k)localStorage.setItem("masa_key",k);
+    if(b)localStorage.setItem("masa_base",b);
+    if(m)localStorage.setItem("masa_model",m);
+  }catch(e){$("#cfgMsg").textContent="❌ 浏览器拒绝写入（"+e.message+"），请检查隐私模式设置";return;}
+  $("#mask").classList.remove("on");refreshStatus();
+  if(k){
+    addBot("⏳ 已保存，正在测试 AI 连接…");
+    const r=await testConn(k,b||CFG.base,m||CFG.model);
+    addBot(r+(r.indexOf("✅")===0?"<br>AI 模式已启用——来，用任何语言问我一个故障问题。":""));
+  }else addBot("已保存（未填 Key，仍为离线规则模式）。");
+};
+$("#cfgClear").onclick=()=>{
+  try{["masa_key","masa_base","masa_model"].forEach(x=>localStorage.removeItem(x));}catch(e){}
+  $("#cfgKey").value="";$("#mask").classList.remove("on");refreshStatus();
+  addBot("已清除 API 配置，回到离线规则模式。");
+};
 
 /* ---------- 看板（本机真实数据） ---------- */
 const PALETTE=["#1d4ed8","#ea580c","#7c3aed","#16a34a","#d97706","#0891b2","#dc2626","#6b7280"];
