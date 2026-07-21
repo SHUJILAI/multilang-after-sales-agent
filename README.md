@@ -10,9 +10,9 @@
 | **在线静态版** | `docs/` | 发链接/二维码给人即时体验；GitHub Pages 托管 | 访客自己浏览器里填（localStorage，直连 LLM） |
 | **服务端版** | `server.js` + `public/` | 正式交付试用：Key 保密、所有客户数据集中统计 | 服务端 `.env` |
 
-在线版地址（二选一）：
-- GitHub Pages（需在仓库 Settings → Pages 选 `main` 分支 `/docs` 目录）：`https://<你的用户名>.github.io/multilang-after-sales-agent/`
-- 免配置即时生效（public 仓库直接可读）：`https://raw.githack.com/<你的用户名>/multilang-after-sales-agent/main/docs/index.html`
+在线版地址：**https://shujilai.github.io/multilang-after-sales-agent/**（GitHub Pages · gh-pages 分支）
+
+本地预览静态版：直接双击 `docs/index.html` 即可（离线规则模式可玩，填 Key 后完整 AI 模式）。
 
 ## 3 步上线
 
